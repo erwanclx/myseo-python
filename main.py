@@ -1,151 +1,208 @@
-from collections import Counter
+from pathlib import Path
+
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkextrafont import Font
+
 import csv
-from time import sleep
 
-from bs4 import BeautifulSoup
-import requests
-
-
-def banner():
-    PURPLE = '\033[0;35m'
-    banner_text = (f"""
-    {PURPLE}
-     █████╗ ██╗   ██╗██████╗ ██╗████████╗    ███████╗███████╗ ██████╗
-    ██╔══██╗██║   ██║██╔══██╗██║╚══██╔══╝    ██╔════╝██╔════╝██╔═══██╗
-    ███████║██║   ██║██║  ██║██║   ██║       ███████╗█████╗  ██║   ██║
-    ██╔══██║██║   ██║██║  ██║██║   ██║       ╚════██║██╔══╝  ██║   ██║
-    ██║  ██║╚██████╔╝██████╔╝██║   ██║       ███████║███████╗╚██████╔╝
-    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝
-    
-    
-    """)
-
-    for col in banner_text:
-        print(col, end="")
-        sleep(0.001)
+def handle_button_click():
+    URL = app.input_URL.get()
+    KEYWORDS = app.input_KEYWORDS.get()
+    print(f"URL: {URL}\nKEYWORDS: {KEYWORDS}")
+    app.resultsPage()
 
 
-# Variables brutes de test
-stop_words = [
-    "le", "la", "les", "de", "du", "des", "un", "une", "deux", "trois",
-    "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "et", "ou",
-    "car", "avec", "pour", "dans", "sur", "sous", "par", "entre", "vers",
-    "ainsi", "mais", "donc", "or", "ni", "si", "que", "qui", "quoi", "où",
-    "quand", "comment", "en", "ça", "ce", "ces", "ceux", "cette", "cet", "mon", "ton", "son", "mes", "tes", "ses"
-]
 
-phrase = "Le chat chat est sur le tapis"
+def init():
 
+    default_stop_words = [
+        "mot", "le", "la", "les", "de", "du", "des", "un", "une", "deux", "trois", 
+        "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "et", "ou", "car", 
+        "avec", "pour", "dans", "sur", "sous", "par", "entre", "vers", "ainsi", "mais", 
+        "donc", "or", "ni", "si", "que", "qui", "quoi", "où", "quand", "comment", "en", 
+        "ça", "ce", "cela", "cette", "ces", "ceux", "mon", "ma", "mes", "ton", "ta", 
+        "tes", "son", "sa", "ses", "est", "sont"
+    ]
 
-# Functions - Étape 1
-def text_to_words(text: str):
-    array_of_words = text.lower().split()
-    sorted_word_count = dict(sorted(Counter(array_of_words).items(), key=lambda x: x[1], reverse=True))
-    return sorted_word_count
-
-
-# Étape 2
-def remove_stop_words(word_dict: dict, stop_words: list):
-    for word in stop_words:
-        if word in word_dict:
-            del word_dict[word]
-    return word_dict
-
-
-# Étape 3
-def get_stop_words():
     filename = "parasite.csv"
-    with open(filename, 'r') as csvfile:
-        csvreader = csv.reader(csvfile)
-        for row in csvreader:
-            stop_words.append(row[0])
-    return stop_words
+
+    try: 
+        with open(filename, 'r') as csvfile:
+            print("File found")
+            csvreader = csv.reader(csvfile)
+    except FileNotFoundError:
+        print("File not found")
+        with open(filename, 'w', newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["mot"])
+            writer.writerows([[word] for word in default_stop_words])
+class app:
+    def __init__(self, master):
+        self.master = master
+        self.master.geometry("862x519")
+        self.master.configure(bg = "#885EFF")
+        self.master.resizable(False, False)
+        self.master.title("mySeo")
+        self.master.iconbitmap("./assets/frame0/favicon.png")
+
+    def homePage(self):
+        self.robotoClassic = Font(file="assets/fonts/Roboto-Regular.ttf", family="Roboto")
+        self.robotoBold = Font(file="assets/fonts/Roboto-Bold.ttf", family="Roboto", weight="bold")
+
+        # Canvas init
+
+        self.mainCanvas = Canvas(
+            self.master,
+            bg = "#885EFF",
+            height = 519,
+            width = 862,
+            bd = 0,
+            highlightthickness = 0,
+            relief = "ridge"
+        )
+
+        self.mainCanvas.place(x = 0, y = 0)
+
+        self.rightCanvas = Canvas(
+            self.master,
+            bg = "#FCFCFC",
+            height = 519,
+            width = 431,
+            bd = 0,
+            highlightthickness = 0,
+            relief = "ridge"
+        )
+
+        self.rightCanvas.place(x = 431, y = 0)
+
+        # Left Side
+
+        self.mainCanvas.create_text(
+            39.999999999999886,
+            127.0,
+            anchor="nw",
+            text="Bienvenue dans mySeo",
+            fill="#FCFCFC",
+            font=("Roboto Bold", 24 * -1)
+        )
+
+        self.mainCanvas.create_rectangle(
+            39.999999999999886,
+            160.0,
+            99.99999999999989,
+            165.0,
+            fill="#FCFCFC",
+            outline="")
+
+        self.mainCanvas.create_text(
+            39.999999999999886,
+            191.0,
+            anchor="nw",
+            text="Entrez une URL à analyser\npour en découvrir un\ncompte-rendu SEO ! ",
+            fill="#FCFCFC",
+            font=("Roboto Regular", 24 * -1)
+        )
+
+        # Right Side
+
+        self.rightCanvas.create_text(
+            40,
+            97.0,
+            anchor="nw",
+            text="Entrez l’URL à analyser",
+            fill="#505485",
+            font=("Roboto Bold", 24 * -1)
+        )
 
 
-# Étape 5
+        self.input_URL = Entry(
+            bd=0,
+            bg="#f5f2f2",
+            fg="#505485",
+            highlightthickness=0,
+            font=("Roboto Regular", 20 * -1)
+        )
+        self.input_URL.place(
+            x=470,
+            y=137.0,
+            width=321.0,
+            height=59.0
+        )
 
-def html_to_text(html: str):
-    soup = BeautifulSoup(html, 'html.parser')
-    text = soup.get_text()
-    return text
+        # ------ Keywords ------
 
+        self.rightCanvas.create_text(
+            40,
+            228.0,
+            anchor="nw",
+            text="Entrez trois mots clés à\nréférencer",
+            fill="#505485",
+            font=("Roboto Bold", 24 * -1),
+        )
 
-# Étape 6
+        self.input_KEYWORDS = Entry(
+            bd=0,
+            bg="#f5f2f2",
+            fg="#505485",
+            highlightthickness=0,
+            font=("Roboto Regular", 20 * -1)
+        )
 
-def get_attribute_values(html: str, tag: str, attribute: str):
-    soup = BeautifulSoup(html, 'html.parser')
-    tags = soup.find_all(tag)
-    attribute_values = []
+        self.input_KEYWORDS.place(
+            x=470,
+            y=296.0,
+            width=321.0,
+            height=59.0
+        )
 
-    for tag in tags:
-        attribute_values.append(tag.get(attribute))
+        # ------ Launch ------
 
-    return attribute_values
+        self.launchAnalysisImg = PhotoImage(
+            file="./assets/frame0/button_1.png"
+        )
 
+        self.launchAnalysis = Button(
+            image=self.launchAnalysisImg,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: handle_button_click(),
+            relief="sunken"
+        )
 
-# Étape 8
+        self.launchAnalysis.place(
+            x=557,
+            y=401.0,
+            width=180.0,
+            height=55.0
+        )
 
-def get_root_domain(url: str):
-    try:
-        return url.split('/')[2]
-    except:
-        return url.split('/')[0]
+        self.master.mainloop()
 
+    def resultsPage(self):
+        self.mainCanvas = Canvas(
+            self.master,
+            bg = "#885EFF",
+            height = 519,
+            width = 862,
+            bd = 0,
+            highlightthickness = 0,
+            relief = "ridge"
+        )
 
-# Étape 9
+        self.mainCanvas.place(x = 0, y = 0)
 
-def get_domain_urls(domain: str, urls: list):
-    domain_urls = []
-    not_domain_urls = []
-    for url in urls:
-        # print(f"""{url} : {get_root_domain(url)}""")
-        if get_root_domain(url) == domain:
-            domain_urls.append(url)
+        self.mainCanvas.create_text(
+            39.999999999999886,
+            127.0,
+            anchor="nw",
+            text="Résultats",
+            fill="#FCFCFC",
+            font=("Roboto Bold", 24 * -1)
+        )
 
-        elif get_root_domain(url) == url:
-            if url.startswith('#'):
-                pass
-            elif url.startswith('mailto:'):
-                pass
-            elif url.startswith('tel:'):
-                pass
-            else:
-                domain_urls.append(url)
+        self.master.mainloop()
 
-        else:
-            not_domain_urls.append(url)
-    return {'domain_urls': domain_urls, 'not_domain_urls': not_domain_urls}
-
-
-# Étape 10
-
-def get_html_from_url(url: str):
-    response = requests.get(url)
-    return response.text
-
-
-# Étape 11
-
-def main():
-    banner()
-    url = input("Veuillez entrer l'URL de la page à analyser : ")
-    html = get_html_from_url(url)
-    text = html_to_text(html)
-    words = text_to_words(text)
-    words = remove_stop_words(words, get_stop_words())
-    firsts_words = list(words.keys())[:3]
-    print("\nLes 3 premiers mots clés sont :")
-    for word in firsts_words:
-        print(f"  -  {word} : {words[word]} fois")
-
-    root_url = get_root_domain(url)
-    links = get_attribute_values(html, 'a', 'href')
-    domain_urls = get_domain_urls(root_url, links)
-    print(f"Nombre de liens entrants : {len(domain_urls['domain_urls'])}")
-    print(f"Nombre de liens sortants : {len(domain_urls['not_domain_urls'])}")
-    alt_tags = get_attribute_values(html, 'img', 'alt')
-    print(f"Nombre de balises alt : {len(alt_tags)}")
-
-
-if __name__ == "__main__":
-    main()
+init()        
+root = Tk()
+app = app(root)
+app.homePage()
